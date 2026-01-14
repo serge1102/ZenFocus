@@ -39,7 +39,7 @@ function App() {
     oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
 
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
 
     oscillator.start();
@@ -56,6 +56,7 @@ function App() {
       setIsRunning(false);
       playNotificationSound();
       saveSession(selectedMinutes);
+      setTimeLeft(selectedMinutes * 60);
     }
     return () => clearInterval(timer);
   }, [isRunning, timeLeft, selectedMinutes]);
