@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Calendar from "react-calendar";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, CheckCircle, History, Calendar as CalendarIcon, Maximize2, Minimize2, Play, Pause } from "lucide-react";
+import { RotateCcw, CheckCircle, History, Calendar as CalendarIcon, Maximize2, Minimize2, Play, Pause, Flame } from "lucide-react";
 import "react-calendar/dist/Calendar.css";
 import "./App.css";
 
@@ -145,7 +145,11 @@ function App() {
   }
 
   return (
-    <div className="h-screen bg-slate-950 text-slate-100 flex flex-col select-none relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
+    <div className="h-screen bg-stone-950 text-stone-100 flex flex-col select-none relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-stone-950 to-black">
+
+      {/* Background Mist Effect (CSS only) */}
+      <div className="absolute top-0 -left-20 w-96 h-96 bg-stone-800/20 rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse delay-1000"></div>
+      <div className="absolute bottom-0 -right-20 w-[500px] h-[500px] bg-orange-900/10 rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse"></div>
 
       {/* Header Area */}
       <header className="w-full flex justify-between items-center p-6 z-50 absolute top-0 left-0">
@@ -153,10 +157,10 @@ function App() {
           {!isMini && (
             <motion.button
               onClick={() => setView(view === "timer" ? "calendar" : "timer")}
-              whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
+              whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
-              className="p-3 rounded-2xl bg-white/5 backdrop-blur-md text-slate-300 shadow-lg cursor-pointer hover:shadow-white/10"
+              className="p-3 rounded-2xl bg-white/5 backdrop-blur-md text-stone-400 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
               title={view === "timer" ? "View History" : "Back to Timer"}
             >
               {view === "timer" ? <History size={22} /> : <CalendarIcon size={22} />}
@@ -165,10 +169,10 @@ function App() {
         </div>
         <motion.button
           onClick={toggleMini}
-          whileHover={{ scale: 1.1, backgroundColor: "rgba(99, 102, 241, 0.25)" }}
+          whileHover={{ scale: 1.1, backgroundColor: "rgba(249, 115, 22, 0.15)" }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 300, damping: 15 }}
-          className="p-3 rounded-2xl bg-indigo-500/10 backdrop-blur-md text-indigo-300 shadow-lg cursor-pointer hover:shadow-indigo-500/20"
+          className="p-3 rounded-2xl bg-orange-500/5 backdrop-blur-md text-orange-200/50 shadow-lg cursor-pointer hover:shadow-orange-500/10 hover:text-orange-200"
           title={isMini ? "Maximize" : "Mini Mode"}
         >
           {isMini ? <Maximize2 size={22} /> : <Minimize2 size={22} />}
@@ -186,14 +190,14 @@ function App() {
                 className={`relative ${isMini ? "w-[220px] h-[220px]" : "w-[400px] h-[400px]"} flex-none flex items-center justify-center transition-all duration-500`}
                 onWheel={handleWheel}
               >
-                {/* Glow Effect Background */}
-                {!isMini && <div className="absolute inset-0 bg-indigo-500/5 blur-3xl rounded-full pointer-events-none"></div>}
+                {/* Glow Effect Background - Heat Radiance */}
+                {!isMini && <div className={`absolute inset-0 blur-3xl rounded-full pointer-events-none transition-opacity duration-1000 ${isRunning ? "bg-orange-500/10 opacity-100" : "bg-stone-500/5 opacity-50"}`}></div>}
 
                 <svg
                   className="absolute top-0 left-0 w-full h-full"
                   viewBox="0 0 300 300"
                 >
-                  {/* 目盛り (Ticks) */}
+                  {/* 目盛り (Ticks) - Wooden/Stone Ticks */}
                   {[...Array(60)].map((_, i) => {
                     const isHour = i % 5 === 0;
                     const tickHeight = isHour ? 15 : 8;
@@ -206,8 +210,9 @@ function App() {
                         y={150 - radius - 20}
                         width={tickWidth}
                         height={tickHeight}
-                        fill={isHour ? "#475569" : "#334155"}
+                        fill={isHour ? "#78350f" : "#44403c"}
                         transform={`rotate(${rotation} 150 150)`}
+                        className="opacity-80"
                       />
                     )
                   })}
@@ -227,36 +232,39 @@ function App() {
                       transformOrigin: "center"
                     }}
                     strokeLinecap="round"
-                    className="filter drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]"
+                    className={`filter ${isRunning ? "drop-shadow-[0_0_10px_rgba(249,115,22,0.6)]" : "drop-shadow-[0_0_2px_rgba(249,115,22,0.3)]"}`}
                   />
 
-                  {/* Gradient Definition */}
+                  {/* Gradient Definition - Ember/Heat */}
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#6366f1" />
-                      <stop offset="100%" stopColor="#a855f7" />
+                      <stop offset="0%" stopColor="#f97316" /> {/* Orange 500 */}
+                      <stop offset="100%" stopColor="#ef4444" /> {/* Red 500 */}
                     </linearGradient>
                   </defs>
                 </svg>
 
                 {/* 中央のテキスト */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none z-10 w-full text-center">
-                  <div className={`${isMini ? "text-5xl" : "text-8xl"} font-mono font-light tracking-tighter text-slate-100 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all select-none leading-none`}>
+                  <div className={`${isMini ? "text-5xl" : "text-8xl"} font-mono font-light tracking-tighter text-orange-50/90 drop-shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all select-none leading-none shadow-stone-900`}>
                     {formatTime(timeLeft)}
                   </div>
                   {isRunning && !isMini && (
-                    <div className="text-slate-400 text-xl font-medium mt-2 animate-in fade-in slide-in-from-bottom-2 duration-700">
-                      Ends at {new Date(Date.now() + timeLeft * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div className="text-orange-200/60 text-xl font-medium mt-2 animate-in fade-in slide-in-from-bottom-2 duration-700 font-sans tracking-wide">
+                      <span className="flex items-center gap-2">
+                        <Flame size={16} className="animate-pulse" />
+                        Heating until {new Date(Date.now() + timeLeft * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
                   )}
                   {!isMini && !isRunning && (
-                    <div className="text-indigo-400/60 text-xs font-bold tracking-[0.2em] mt-4 uppercase animate-pulse">
-                      Scroll to Set
+                    <div className="text-stone-500/60 text-xs font-bold tracking-[0.2em] mt-4 uppercase animate-pulse">
+                      Scroll to Set Time
                     </div>
                   )}
                   {isRunning && !isMini && (
-                    <div className="text-emerald-400/60 text-xs font-bold tracking-[0.2em] mt-2 uppercase">
-                      Focusing
+                    <div className="text-orange-400/40 text-xs font-bold tracking-[0.2em] mt-2 uppercase">
+                      Infrared On
                     </div>
                   )}
                 </div>
@@ -265,8 +273,8 @@ function App() {
 
             {/* Dock Area (Pinned to flow bottom) */}
             <div className={`flex-none w-full flex justify-center pb-12 z-20 ${isMini ? "pb-4" : ""}`}>
-              {/* Glass Dock Container */}
-              <div className={`flex items-center justify-center gap-12 px-12 py-8 bg-black/20 backdrop-blur-xl rounded-[3rem] shadow-2xl shadow-black/30 transition-all duration-500 ${isMini ? "scale-75 origin-bottom gap-6 px-8" : ""}`}>
+              {/* Glass Dock Container - Darker Stone Glass */}
+              <div className={`flex items-center justify-center gap-12 px-12 py-8 bg-stone-900/60 backdrop-blur-xl rounded-[3rem] shadow-2xl shadow-black/50 transition-all duration-500 ${isMini ? "scale-75 origin-bottom gap-6 px-8" : ""}`}>
 
                 {/* Reset Button (Left) */}
                 {!isMini && (
@@ -275,32 +283,31 @@ function App() {
                     whileHover={{
                       scale: 1.15,
                       rotate: -15,
-                      backgroundColor: "rgba(244, 63, 94, 0.1)",
-                      color: "#fda4af",
-                      boxShadow: "0 0 20px rgba(244, 63, 94, 0.3)"
+                      backgroundColor: "rgba(255, 255, 255, 0.05)",
+                      color: "#fb7185", // rose-400
                     }}
                     whileTap={{ scale: 0.9 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    className="flex-none p-4 rounded-full text-slate-400 bg-white/5 backdrop-blur-md transition-colors"
+                    className="flex-none p-4 rounded-full text-stone-500 bg-transparent transition-colors"
                     title="Reset"
                   >
                     <RotateCcw size={26} />
                   </motion.button>
                 )}
 
-                {/* Main Action Button (Center) */}
+                {/* Main Action Button (Center) - Hot Stone */}
                 <motion.button
                   onClick={handleStartStop}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
                   className={`flex-none w-24 h-24 mx-8 rounded-full flex items-center justify-center transition-all relative group overflow-hidden ${isRunning
-                    ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-[0_0_60px_rgba(244,63,94,0.6)] border-t border-white/20"
-                    : "bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-[0_0_50px_rgba(99,102,241,0.5)] border-t border-white/30"
+                    ? "bg-gradient-to-br from-orange-600 to-red-600 text-white shadow-[0_0_50px_rgba(239,68,68,0.6)] ring-1 ring-white/10"
+                    : "bg-gradient-to-br from-stone-800 to-stone-950 text-stone-400 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),_0_20px_40px_rgba(0,0,0,0.6)] border-t border-white/5"
                     }`}
                 >
-                  {/* Internal highlight for 3D glass effect */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                  {/* Internal highlight for 3D stone effect */}
+                  <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${isRunning ? "from-white/20 to-transparent" : "from-black/20 via-transparent to-white/5"} pointer-events-none`} />
 
                   <AnimatePresence mode="wait">
                     {isRunning ? (
@@ -322,7 +329,7 @@ function App() {
                         transition={{ duration: 0.2 }}
                         className="ml-1"
                       >
-                        <Play size={34} fill="currentColor" className="drop-shadow-md" />
+                        <Play size={34} fill="currentColor" className="drop-shadow-sm opacity-80" />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -334,13 +341,12 @@ function App() {
                     onClick={handleFinish}
                     whileHover={{
                       scale: 1.15,
-                      backgroundColor: "rgba(16, 185, 129, 0.1)",
-                      color: "#6ee7b7",
-                      boxShadow: "0 0 20px rgba(16, 185, 129, 0.3)"
+                      backgroundColor: "rgba(255, 255, 255, 0.05)",
+                      color: "#6ee7b7", // emerald-300
                     }}
                     whileTap={{ scale: 0.9 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    className="flex-none p-4 rounded-full text-slate-400 bg-white/5 backdrop-blur-md transition-colors"
+                    className="flex-none p-4 rounded-full text-stone-500 bg-transparent transition-colors"
                     title="Finish"
                   >
                     <CheckCircle size={28} />
@@ -351,10 +357,10 @@ function App() {
           </>
         ) : (
           <div className="flex-grow flex items-center justify-center">
-            <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/5 shadow-2xl z-10 overflow-y-auto max-h-[80vh] animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-full max-w-md bg-stone-900/80 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/5 shadow-2xl z-10 overflow-y-auto max-h-[80vh] animate-in fade-in zoom-in-95 duration-300">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white tracking-wide">History</h2>
-                <div className="text-xs text-slate-500 font-mono tracking-widest uppercase">Logs</div>
+                <h2 className="text-2xl font-bold text-stone-200 tracking-wide">History</h2>
+                <div className="text-xs text-stone-600 font-mono tracking-widest uppercase">Logs</div>
               </div>
 
               <div className="custom-calendar mb-6 bg-black/20 rounded-2xl p-2 border border-white/5">
@@ -366,7 +372,7 @@ function App() {
                     if (mins) {
                       return (
                         <div className="flex flex-col items-center mt-1">
-                          <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.8)]"></div>
+                          <div className="w-1.5 h-1.5 bg-orange-500 rounded-full shadow-[0_0_5px_rgba(249,115,22,0.8)]"></div>
                         </div>
                       );
                     }
@@ -376,14 +382,14 @@ function App() {
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Recent Sessions</h3>
+                <h3 className="text-xs font-bold text-stone-600 uppercase tracking-widest mb-4">Recent Sessions</h3>
                 {Object.entries(focusHistory)
                   .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
                   .slice(0, 3)
                   .map(([date, mins]) => (
                     <div key={date} className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-                      <span className="text-slate-300 font-mono text-sm">{date}</span>
-                      <span className="text-indigo-300 font-bold drop-shadow-sm">{mins} min</span>
+                      <span className="text-stone-400 font-mono text-sm">{date}</span>
+                      <span className="text-orange-300 font-bold drop-shadow-sm">{mins} min</span>
                     </div>
                   ))
                 }
