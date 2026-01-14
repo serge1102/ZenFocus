@@ -29,21 +29,57 @@ function App() {
 
   const playNotificationSound = () => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    const bufferSize = audioContext.sampleRate * 4; // 4 seconds
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    // Generate white noise
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
 
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+    const noiseSource = audioContext.createBufferSource();
+    noiseSource.buffer = buffer;
 
-    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+    // Filter 1: Rumble (Low frequency impact) - Body of the splash
+    const rumbleFilter = audioContext.createBiquadFilter();
+    rumbleFilter.type = "lowpass";
+    rumbleFilter.frequency.value = 400;
 
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.5);
+    const rumbleGain = audioContext.createGain();
+
+    // Filter 2: Hiss (High frequency sizzle) - The "Juujuu" sound
+    const hissFilter = audioContext.createBiquadFilter();
+    hissFilter.type = "highpass";
+    hissFilter.frequency.value = 3500;
+    hissFilter.Q.value = 1; // Broad peak for texture
+
+    const hissGain = audioContext.createGain();
+
+    // Connect Graph
+    noiseSource.connect(rumbleFilter);
+    rumbleFilter.connect(rumbleGain);
+    rumbleGain.connect(audioContext.destination);
+
+    noiseSource.connect(hissFilter);
+    hissFilter.connect(hissGain);
+    hissGain.connect(audioContext.destination);
+
+    const now = audioContext.currentTime;
+
+    // Rumble Envelope - Heavy start, quick fade
+    rumbleGain.gain.setValueAtTime(0, now);
+    rumbleGain.gain.linearRampToValueAtTime(3.0, now + 0.1);
+    rumbleGain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+
+    // Hiss Envelope - Sharp attack, sustains longer for "Juujuu"
+    hissGain.gain.setValueAtTime(0, now);
+    hissGain.gain.linearRampToValueAtTime(1.5, now + 0.05); // Snap start
+    hissGain.gain.exponentialRampToValueAtTime(0.4, now + 1.0); // Strong sizzle sustain
+    hissGain.gain.exponentialRampToValueAtTime(0.01, now + 3.5); // Long trail
+
+    noiseSource.start();
+    noiseSource.stop(now + 4.0);
   };
 
   useEffect(() => {
@@ -307,7 +343,7 @@ function App() {
                     {formatTime(timeLeft)}
                   </div>
                   {isRunning && !isMini && (
-                    <div className="text-orange-200/80 text-xl font-medium mt-2 animate-in fade-in slide-in-from-bottom-2 duration-700 font-sans tracking-wide drop-shadow-md">
+                    <div className="text-orange-200/80 text-xl font-medium mt-2 font-sans tracking-wide drop-shadow-md">
                       <span className="flex items-center gap-2">
                         <Flame size={16} className="animate-pulse text-orange-400" />
                         Heating until {new Date(Date.now() + timeLeft * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -370,7 +406,6 @@ function App() {
                     {isRunning ? (
                       <motion.div
                         key="pause"
-                        initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.5 }}
                         transition={{ duration: 0.2 }}
@@ -380,7 +415,6 @@ function App() {
                     ) : (
                       <motion.div
                         key="play"
-                        initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.5 }}
                         transition={{ duration: 0.2 }}
@@ -414,7 +448,7 @@ function App() {
           </>
         ) : (
           <div className="flex-grow flex items-center justify-center p-6">
-            <div className="w-full max-w-md bg-[#291d18]/90 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/5 shadow-2xl z-10 overflow-y-auto max-h-[80vh] animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-full max-w-md bg-[#291d18]/90 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/5 shadow-2xl z-10 overflow-y-auto max-h-[80vh]">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-stone-200 tracking-wide">Sauna Logs</h2>
                 <div className="text-xs text-stone-500 font-mono tracking-widest uppercase">History</div>
