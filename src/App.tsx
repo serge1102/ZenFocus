@@ -169,10 +169,10 @@ function App() {
         </div>
         <motion.button
           onClick={toggleMini}
-          whileHover={{ scale: 1.1, backgroundColor: "rgba(249, 115, 22, 0.15)" }}
+          whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 300, damping: 15 }}
-          className="p-3 rounded-2xl bg-orange-500/5 backdrop-blur-md text-orange-200/50 shadow-lg cursor-pointer hover:shadow-orange-500/10 hover:text-orange-200"
+          className="p-3 rounded-2xl bg-white/5 backdrop-blur-md text-stone-400 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
           title={isMini ? "Maximize" : "Mini Mode"}
         >
           {isMini ? <Maximize2 size={22} /> : <Minimize2 size={22} />}
@@ -272,9 +272,9 @@ function App() {
             </div>
 
             {/* Dock Area (Pinned to flow bottom) */}
-            <div className={`flex-none w-full flex justify-center pb-12 z-20 ${isMini ? "pb-4" : ""}`}>
+            <div className={`flex-none w-full flex justify-center pb-6 z-20 ${isMini ? "pb-4" : ""}`}>
               {/* Glass Dock Container - Darker Stone Glass */}
-              <div className={`flex items-center justify-center gap-12 px-12 py-8 bg-stone-900/60 backdrop-blur-xl rounded-[3rem] shadow-2xl shadow-black/50 transition-all duration-500 ${isMini ? "scale-75 origin-bottom gap-6 px-8" : ""}`}>
+              <div className={`flex items-center justify-center gap-12 px-12 py-1 bg-stone-900/60 backdrop-blur-xl rounded-[3rem] shadow-2xl shadow-black/50 transition-all duration-500 ${isMini ? "scale-75 origin-bottom gap-6 px-8" : ""}`}>
 
                 {/* Reset Button (Left) */}
                 {!isMini && (
@@ -288,10 +288,10 @@ function App() {
                     }}
                     whileTap={{ scale: 0.9 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    className="flex-none p-4 rounded-full text-stone-500 bg-transparent transition-colors"
+                    className="flex-none p-2 rounded-full text-stone-500 bg-transparent transition-colors"
                     title="Reset"
                   >
-                    <RotateCcw size={26} />
+                    <RotateCcw size={18} />
                   </motion.button>
                 )}
 
@@ -301,7 +301,7 @@ function App() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className={`flex-none w-24 h-24 mx-8 rounded-full flex items-center justify-center transition-all relative group overflow-hidden ${isRunning
+                  className={`flex-none w-[72px] h-[72px] mx-8 rounded-full flex items-center justify-center transition-all relative group overflow-hidden ${isRunning
                     ? "bg-gradient-to-br from-orange-600 to-red-600 text-white shadow-[0_0_50px_rgba(239,68,68,0.6)] ring-1 ring-white/10"
                     : "bg-gradient-to-br from-stone-800 to-stone-950 text-stone-400 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),_0_20px_40px_rgba(0,0,0,0.6)] border-t border-white/5"
                     }`}
@@ -318,7 +318,7 @@ function App() {
                         exit={{ opacity: 0, scale: 0.5 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <Pause size={34} fill="currentColor" className="drop-shadow-md" />
+                        <Pause size={26} fill="currentColor" className="drop-shadow-md" />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -329,7 +329,7 @@ function App() {
                         transition={{ duration: 0.2 }}
                         className="ml-1"
                       >
-                        <Play size={34} fill="currentColor" className="drop-shadow-sm opacity-80" />
+                        <Play size={26} fill="currentColor" className="drop-shadow-sm opacity-80" />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -346,10 +346,10 @@ function App() {
                     }}
                     whileTap={{ scale: 0.9 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    className="flex-none p-4 rounded-full text-stone-500 bg-transparent transition-colors"
+                    className="flex-none p-2 rounded-full text-stone-500 bg-transparent transition-colors"
                     title="Finish"
                   >
-                    <CheckCircle size={28} />
+                    <CheckCircle size={18} />
                   </motion.button>
                 )}
               </div>
