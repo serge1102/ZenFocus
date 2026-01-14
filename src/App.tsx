@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Calendar from "react-calendar";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, CheckCircle, History, Calendar as CalendarIcon, Maximize2, Minimize2 } from "lucide-react";
+import { RotateCcw, CheckCircle, History, Calendar as CalendarIcon, Maximize2, Minimize2, Play, Pause } from "lucide-react";
 import "react-calendar/dist/Calendar.css";
 import "./App.css";
 
@@ -306,28 +306,23 @@ function App() {
                     {isRunning ? (
                       <motion.div
                         key="pause"
-                        initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                        exit={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.5 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <div className="flex gap-2">
-                          <div className="w-2.5 h-8 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
-                          <div className="w-2.5 h-8 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
-                        </div>
+                        <Pause size={34} fill="currentColor" className="drop-shadow-md" />
                       </motion.div>
                     ) : (
                       <motion.div
                         key="play"
-                        initial={{ opacity: 0, scale: 0.5, x: -5 }}
-                        animate={{ opacity: 1, scale: 1, x: 2 }}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.5 }}
                         transition={{ duration: 0.2 }}
                         className="ml-1"
                       >
-                        <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" className="drop-shadow-md">
-                          <path d="M5 3l14 9-14 9V3z" />
-                        </svg>
+                        <Play size={34} fill="currentColor" className="drop-shadow-md" />
                       </motion.div>
                     )}
                   </AnimatePresence>
