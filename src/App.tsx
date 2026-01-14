@@ -144,11 +144,66 @@ function App() {
     strokeDashoffset = circumference * (1 - (selectedMinutes / 60));
   }
 
-  return (
-    <div className="h-screen bg-stone-950 text-stone-100 flex flex-col select-none relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-stone-950 to-black">
 
-      {/* Background Mist Effect (CSS only) */}
-      <div className="absolute top-0 -left-20 w-96 h-96 bg-stone-800/20 rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse delay-1000"></div>
+  // Steam Particle Setup
+  const [steamParticles, setSteamParticles] = useState<{ id: number; left: string; duration: string; delay: string; size: number }[]>([]);
+
+  useEffect(() => {
+    // Generate steam particles - More density
+    const particles = Array.from({ length: 40 }).map((_, i) => ({
+      id: i,
+      left: `${-10 + Math.random() * 120}%`, // Wider spread
+      duration: `${3 + Math.random() * 5}s`,
+      delay: `${Math.random() * 2}s`, // Reduced delay for faster onset
+      size: 100 + Math.random() * 150 // Larger particles
+    }));
+    setSteamParticles(particles);
+  }, []);
+
+
+  return (
+    <div
+      className="h-screen flex flex-col select-none relative overflow-hidden text-stone-100 font-sans"
+      style={{
+        backgroundColor: '#1c1008', // Dark wood base
+        backgroundImage: `
+          radial-gradient(circle at 50% 0%, rgba(255,150,100,0.15), transparent 60%),
+          repeating-linear-gradient(90deg, transparent 0, transparent 58px, rgba(0,0,0,0.3) 59px, rgba(0,0,0,0.3) 60px),
+          url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E")
+        `
+      }}
+    >
+
+      {/* Steam Effect - Only visible when running */}
+      <AnimatePresence>
+        {isRunning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 2 }}
+            className="absolute inset-0 pointer-events-none z-10"
+          >
+            {steamParticles.map((p) => (
+              <div
+                key={p.id}
+                className="absolute -bottom-20 bg-white/5 rounded-full blur-[60px] animate-steam"
+                style={{
+                  left: p.left,
+                  width: `${p.size}px`,
+                  height: `${p.size}px`,
+                  animationDuration: p.duration,
+                  animationDelay: p.delay,
+                  opacity: 0
+                }}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Ambient Mist Effect (Base - weaker) */}
+      <div className="absolute top-0 -left-20 w-96 h-96 bg-stone-800/10 rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse delay-1000"></div>
       <div className="absolute bottom-0 -right-20 w-[500px] h-[500px] bg-orange-900/10 rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse"></div>
 
       {/* Header Area */}
@@ -160,7 +215,7 @@ function App() {
               whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
-              className="p-3 rounded-2xl bg-white/5 backdrop-blur-md text-stone-400 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
+              className="p-3 rounded-2xl bg-black/20 backdrop-blur-md text-stone-400 border border-white/5 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
               title={view === "timer" ? "View History" : "Back to Timer"}
             >
               {view === "timer" ? <History size={22} /> : <CalendarIcon size={22} />}
@@ -172,7 +227,7 @@ function App() {
           whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 300, damping: 15 }}
-          className="p-3 rounded-2xl bg-white/5 backdrop-blur-md text-stone-400 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
+          className="p-3 rounded-2xl bg-black/20 backdrop-blur-md text-stone-400 border border-white/5 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
           title={isMini ? "Maximize" : "Mini Mode"}
         >
           {isMini ? <Maximize2 size={22} /> : <Minimize2 size={22} />}
@@ -180,7 +235,7 @@ function App() {
       </header>
 
       {/* メインコンテンツエリア - Flex Column Layout */}
-      <main className="flex-grow w-full h-full flex flex-col relative z-0">
+      <main className="flex-grow w-full h-full flex flex-col relative z-20">
 
         {view === "timer" ? (
           <>
@@ -197,7 +252,7 @@ function App() {
                   className="absolute top-0 left-0 w-full h-full"
                   viewBox="0 0 300 300"
                 >
-                  {/* 目盛り (Ticks) - Wooden/Stone Ticks */}
+                  {/* 目盛り (Ticks) - Darker Stone Ticks on Wood */}
                   {[...Array(60)].map((_, i) => {
                     const isHour = i % 5 === 0;
                     const tickHeight = isHour ? 15 : 8;
@@ -210,9 +265,9 @@ function App() {
                         y={150 - radius - 20}
                         width={tickWidth}
                         height={tickHeight}
-                        fill={isHour ? "#78350f" : "#44403c"}
+                        fill={isHour ? "#451a03" : "#57534e"} // Dark Wood/Stone
                         transform={`rotate(${rotation} 150 150)`}
-                        className="opacity-80"
+                        className="opacity-90"
                       />
                     )
                   })}
@@ -232,13 +287,14 @@ function App() {
                       transformOrigin: "center"
                     }}
                     strokeLinecap="round"
-                    className={`filter ${isRunning ? "drop-shadow-[0_0_10px_rgba(249,115,22,0.6)]" : "drop-shadow-[0_0_2px_rgba(249,115,22,0.3)]"}`}
+                    className={`filter ${isRunning ? "drop-shadow-[0_0_15px_rgba(249,115,22,0.8)]" : "drop-shadow-[0_0_2px_rgba(249,115,22,0.3)]"}`}
                   />
 
                   {/* Gradient Definition - Ember/Heat */}
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#f97316" /> {/* Orange 500 */}
+                      <stop offset="0%" stopColor="#fbbf24" /> {/* Amber 400 (Fire core) */}
+                      <stop offset="50%" stopColor="#f97316" /> {/* Orange 500 */}
                       <stop offset="100%" stopColor="#ef4444" /> {/* Red 500 */}
                     </linearGradient>
                   </defs>
@@ -246,24 +302,24 @@ function App() {
 
                 {/* 中央のテキスト */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none z-10 w-full text-center">
-                  <div className={`${isMini ? "text-5xl" : "text-8xl"} font-mono font-light tracking-tighter text-orange-50/90 drop-shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all select-none leading-none shadow-stone-900`}>
+                  <div className={`${isMini ? "text-5xl" : "text-8xl"} font-mono font-light tracking-tighter text-orange-50/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] transition-all select-none leading-none`}>
                     {formatTime(timeLeft)}
                   </div>
                   {isRunning && !isMini && (
-                    <div className="text-orange-200/60 text-xl font-medium mt-2 animate-in fade-in slide-in-from-bottom-2 duration-700 font-sans tracking-wide">
+                    <div className="text-orange-200/80 text-xl font-medium mt-2 animate-in fade-in slide-in-from-bottom-2 duration-700 font-sans tracking-wide drop-shadow-md">
                       <span className="flex items-center gap-2">
-                        <Flame size={16} className="animate-pulse" />
+                        <Flame size={16} className="animate-pulse text-orange-400" />
                         Heating until {new Date(Date.now() + timeLeft * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                   )}
                   {!isMini && !isRunning && (
-                    <div className="text-stone-500/60 text-xs font-bold tracking-[0.2em] mt-4 uppercase animate-pulse">
+                    <div className="text-stone-500/80 text-xs font-bold tracking-[0.2em] mt-4 uppercase animate-pulse shadow-black drop-shadow-sm">
                       Scroll to Set Time
                     </div>
                   )}
                   {isRunning && !isMini && (
-                    <div className="text-orange-400/40 text-xs font-bold tracking-[0.2em] mt-2 uppercase">
+                    <div className="text-orange-400/60 text-xs font-bold tracking-[0.2em] mt-2 uppercase">
                       Infrared On
                     </div>
                   )}
@@ -272,9 +328,9 @@ function App() {
             </div>
 
             {/* Dock Area (Pinned to flow bottom) */}
-            <div className={`flex-none w-full flex justify-center pb-6 z-20 ${isMini ? "pb-4" : ""}`}>
-              {/* Glass Dock Container - Darker Stone Glass */}
-              <div className={`flex items-center justify-center gap-12 px-12 py-1 bg-stone-900/60 backdrop-blur-xl rounded-[3rem] shadow-2xl shadow-black/50 transition-all duration-500 ${isMini ? "scale-75 origin-bottom gap-6 px-8" : ""}`}>
+            <div className={`flex-none w-full flex justify-center pb-8 z-30 ${isMini ? "pb-4" : ""}`}>
+              {/* Glass Dock Container - Dark Stone Texture */}
+              <div className={`flex items-center justify-center gap-12 px-12 py-1 bg-[#291d18]/80 backdrop-blur-xl rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.1)] border-t border-white/5 transition-all duration-500 ${isMini ? "scale-75 origin-bottom gap-6 px-8" : ""}`}>
 
                 {/* Reset Button (Left) */}
                 {!isMini && (
@@ -302,12 +358,12 @@ function App() {
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
                   className={`flex-none w-[72px] h-[72px] mx-8 rounded-full flex items-center justify-center transition-all relative group overflow-hidden ${isRunning
-                    ? "bg-gradient-to-br from-orange-600 to-red-600 text-white shadow-[0_0_50px_rgba(239,68,68,0.6)] ring-1 ring-white/10"
-                    : "bg-gradient-to-br from-stone-800 to-stone-950 text-stone-400 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),_0_20px_40px_rgba(0,0,0,0.6)] border-t border-white/5"
+                    ? "bg-gradient-to-br from-orange-700 to-red-700 text-white shadow-[0_0_40px_rgba(239,68,68,0.5),inset_0_2px_5px_rgba(255,255,255,0.3)] ring-1 ring-orange-500/30"
+                    : "bg-gradient-to-br from-[#3f3b38] to-[#1c1917] text-stone-400 shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_15px_30px_rgba(0,0,0,0.6)] border-t border-white/10"
                     }`}
                 >
                   {/* Internal highlight for 3D stone effect */}
-                  <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${isRunning ? "from-white/20 to-transparent" : "from-black/20 via-transparent to-white/5"} pointer-events-none`} />
+                  <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${isRunning ? "from-white/20 to-transparent" : "from-white/10 via-transparent to-black/40"} pointer-events-none`} />
 
                   <AnimatePresence mode="wait">
                     {isRunning ? (
@@ -318,7 +374,7 @@ function App() {
                         exit={{ opacity: 0, scale: 0.5 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <Pause size={26} fill="currentColor" className="drop-shadow-md" />
+                        <Pause size={28} fill="currentColor" className="drop-shadow-lg text-orange-50" />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -329,7 +385,7 @@ function App() {
                         transition={{ duration: 0.2 }}
                         className="ml-1"
                       >
-                        <Play size={26} fill="currentColor" className="drop-shadow-sm opacity-80" />
+                        <Play size={28} fill="currentColor" className="drop-shadow-md opacity-90 text-stone-300" />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -356,14 +412,14 @@ function App() {
             </div>
           </>
         ) : (
-          <div className="flex-grow flex items-center justify-center">
-            <div className="w-full max-w-md bg-stone-900/80 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/5 shadow-2xl z-10 overflow-y-auto max-h-[80vh] animate-in fade-in zoom-in-95 duration-300">
+          <div className="flex-grow flex items-center justify-center p-6">
+            <div className="w-full max-w-md bg-[#291d18]/90 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/5 shadow-2xl z-10 overflow-y-auto max-h-[80vh] animate-in fade-in zoom-in-95 duration-300">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-stone-200 tracking-wide">History</h2>
-                <div className="text-xs text-stone-600 font-mono tracking-widest uppercase">Logs</div>
+                <h2 className="text-2xl font-bold text-stone-200 tracking-wide">Sauna Logs</h2>
+                <div className="text-xs text-stone-500 font-mono tracking-widest uppercase">History</div>
               </div>
 
-              <div className="custom-calendar mb-6 bg-black/20 rounded-2xl p-2 border border-white/5">
+              <div className="custom-calendar mb-6 bg-black/40 rounded-2xl p-2 border border-white/5">
                 <Calendar
                   tileContent={({ date, view }) => {
                     if (view !== 'month') return null;
