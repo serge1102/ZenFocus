@@ -60,6 +60,10 @@ function App() {
     return () => clearInterval(timer);
   }, [isRunning, timeLeft, selectedMinutes]);
 
+  useEffect(() => {
+    document.title = `${formatTime(timeLeft)} - ZenFocus`;
+  }, [timeLeft]);
+
   const saveSession = (minutes: number) => {
     if (minutes <= 0) return;
 
@@ -237,16 +241,21 @@ function App() {
 
                 {/* 中央のテキスト */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none z-10 w-full text-center">
-                  <div className={`${isMini ? "text-5xl" : "text-8xl"} font-mono font-light tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all select-none leading-none`}>
+                  <div className={`${isMini ? "text-5xl" : "text-8xl"} font-mono font-light tracking-tighter text-slate-100 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all select-none leading-none`}>
                     {formatTime(timeLeft)}
                   </div>
+                  {isRunning && !isMini && (
+                    <div className="text-slate-400 text-xl font-medium mt-2 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                      Ends at {new Date(Date.now() + timeLeft * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  )}
                   {!isMini && !isRunning && (
                     <div className="text-indigo-400/60 text-xs font-bold tracking-[0.2em] mt-4 uppercase animate-pulse">
                       Scroll to Set
                     </div>
                   )}
                   {isRunning && !isMini && (
-                    <div className="text-emerald-400/60 text-xs font-bold tracking-[0.2em] mt-4 uppercase">
+                    <div className="text-emerald-400/60 text-xs font-bold tracking-[0.2em] mt-2 uppercase">
                       Focusing
                     </div>
                   )}
@@ -286,8 +295,8 @@ function App() {
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
                   className={`flex-none w-24 h-24 mx-8 rounded-full flex items-center justify-center transition-all relative group overflow-hidden ${isRunning
-                      ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-[0_0_60px_rgba(244,63,94,0.6)] border-t border-white/20"
-                      : "bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-[0_0_50px_rgba(99,102,241,0.5)] border-t border-white/30"
+                    ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-[0_0_60px_rgba(244,63,94,0.6)] border-t border-white/20"
+                    : "bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-[0_0_50px_rgba(99,102,241,0.5)] border-t border-white/30"
                     }`}
                 >
                   {/* Internal highlight for 3D glass effect */}
