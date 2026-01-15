@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, CheckCircle, History, Calendar as CalendarIcon, Maximize2, Minimize2, Play, Pause, Flame, Trophy, TrendingUp, Settings, Volume2, X } from "lucide-react";
+import { RotateCcw, CheckCircle, History, Calendar as CalendarIcon, Maximize2, Minimize2, Play, Pause, Flame, Trophy, TrendingUp, Settings, Volume2, X, Trash2, Info } from "lucide-react";
 import "./App.css";
 
 // 日付ごとの集中データを表す型
@@ -157,6 +157,13 @@ function App() {
     setIsMini(nextMini);
     await invoke("toggle_mini_mode", { isMini: nextMini });
     if (nextMini) setView("timer");
+  };
+
+  const handleClearHistory = () => {
+    if (window.confirm("Are you sure you want to clear your entire history? This cannot be undone.")) {
+      setFocusHistory({});
+      localStorage.removeItem("zenfocus_history");
+    }
   };
 
   // --- Scroll Interaction Logic ---
@@ -347,7 +354,7 @@ function App() {
                   />
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-3">
                   <button
                     onClick={() => playNotificationSound(volume)}
                     className="w-full py-2 px-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-stone-300 text-sm font-medium transition-colors flex items-center justify-center gap-2"
@@ -355,6 +362,21 @@ function App() {
                     <Play size={14} />
                     Test Sound
                   </button>
+
+                  <button
+                    onClick={handleClearHistory}
+                    className="w-full py-2 px-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={14} />
+                    Clear History
+                  </button>
+
+                  <div className="text-center pt-2 border-t border-white/5">
+                    <span className="text-[10px] text-stone-600 flex items-center justify-center gap-1">
+                      <Info size={10} />
+                      ZenFocus v0.1.0
+                    </span>
+                  </div>
                 </div>
               </div>
             </motion.div>
