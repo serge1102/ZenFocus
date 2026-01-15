@@ -8,6 +8,43 @@ body {
   padding: 0;
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  /* Creates padding around thumb */
+  background-clip: content-box;
+  transition: background-color 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(249, 115, 22, 0.6);
+  /* Orange-500 */
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Specific override for the dashboard container if needed */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+}
+
 /* Calendar Dark Mode Styles - High Specificity */
 
 .react-calendar,
@@ -135,7 +172,7 @@ body {
 
 .react-calendar__tile {
 
-  padding: 12px 6px !important;
+  padding: 8px 4px !important;
 
   background: none !important;
 
@@ -154,9 +191,9 @@ body {
 
   justify-content: flex-start !important;
 
-  height: 64px !important;
+  height: 42px !important;
 
-  font-size: 0.9em;
+  font-size: 0.85em;
 
 }
 
@@ -197,74 +234,18 @@ body {
 
   background: #9a3412 !important;
   /* bg-orange-800 */
-
+  background: transparent !important;
 }
 
-
-
+/* Active / Selected (If clicked) */
 .react-calendar__tile--active {
-
-  background: #ea580c !important;
-  /* bg-orange-600 */
-
+  background: transparent !important;
   color: white !important;
-
 }
-
-
 
 .react-calendar__tile--active:enabled:hover,
-
 .react-calendar__tile--active:enabled:focus {
-
-  background: #c2410c !important;
-  /* bg-orange-700 */
-
+  background: transparent !important;
 }
 
-
-
-.react-calendar__month-view__days__tile--neighboringMonth {
-
-  color: #57534e !important;
-  /* text-stone-600 */
-
-}
-
-
-
-/* Remove default abbr underlines */
-
-abbr[title] {
-  text-decoration: none !important;
-}
-
-/* Steam Animation */
-@keyframes steam {
-  0% {
-    transform: translateY(20%) scale(1);
-    opacity: 0;
-  }
-
-  25% {
-    opacity: 0.6;
-    /* Much thicker start */
-  }
-
-  75% {
-    opacity: 0.3;
-    /* Linger longer */
-  }
-
-  100% {
-    transform: translateY(-100vh) scale(2.5);
-    /* Grow larger */
-    opacity: 0;
-  }
-}
-
-.animate-steam {
-  animation-name: steam;
-  animation-timing-function: cubic-bezier(0.45, 0.05, 0.55, 0.95);
-  animation-iteration-count: infinite;
-}
+/* Custom Heatmap/Dot styling is handled in JSX, but we ensure the tile itself doesn't interfere */

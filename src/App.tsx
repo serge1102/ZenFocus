@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import Calendar from "react-calendar";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, CheckCircle, History, Calendar as CalendarIcon, Maximize2, Minimize2, Play, Pause, Flame } from "lucide-react";
-import "react-calendar/dist/Calendar.css";
+import { RotateCcw, CheckCircle, History, Calendar as CalendarIcon, Maximize2, Minimize2, Play, Pause, Flame, Trophy, TrendingUp, Settings, Volume2, X } from "lucide-react";
 import "./App.css";
 
 // 日付ごとの集中データを表す型
@@ -18,16 +16,30 @@ function App() {
   const [isMini, setIsMini] = useState(false);
   const [view, setView] = useState<"timer" | "calendar">("timer");
   const [focusHistory, setFocusHistory] = useState<FocusData>({});
+  const [volume, setVolume] = useState(50);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // 初期ロード：localStorageから履歴を読み込む
+  // 初期ロード：localStorageから履歴と設定を読み込む
   useEffect(() => {
     const saved = localStorage.getItem("zenfocus_history");
     if (saved) {
       setFocusHistory(JSON.parse(saved));
     }
+    const savedVolume = localStorage.getItem("zenfocus_volume");
+    if (savedVolume) {
+      setVolume(parseInt(savedVolume, 10));
+    }
   }, []);
 
-  const playNotificationSound = () => {
+  // 音量が変更されたら保存
+  useEffect(() => {
+    localStorage.setItem("zenfocus_volume", volume.toString());
+  }, [volume]);
+
+  const playNotificationSound = (testVolume?: number) => {
+    const volToUse = testVolume !== undefined ? testVolume : volume;
+    if (volToUse === 0) return;
+
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const bufferSize = audioContext.sampleRate * 4; // 4 seconds
     const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
@@ -68,14 +80,16 @@ function App() {
     const now = audioContext.currentTime;
 
     // Rumble Envelope - Heavy start, quick fade
+    const masterGainValue = volToUse / 100;
+
     rumbleGain.gain.setValueAtTime(0, now);
-    rumbleGain.gain.linearRampToValueAtTime(3.0, now + 0.1);
+    rumbleGain.gain.linearRampToValueAtTime(3.0 * masterGainValue, now + 0.1);
     rumbleGain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
 
     // Hiss Envelope - Sharp attack, sustains longer for "Juujuu"
     hissGain.gain.setValueAtTime(0, now);
-    hissGain.gain.linearRampToValueAtTime(1.5, now + 0.05); // Snap start
-    hissGain.gain.exponentialRampToValueAtTime(0.4, now + 1.0); // Strong sizzle sustain
+    hissGain.gain.linearRampToValueAtTime(1.5 * masterGainValue, now + 0.05); // Snap start
+    hissGain.gain.exponentialRampToValueAtTime(0.4 * masterGainValue, now + 1.0); // Strong sizzle sustain
     hissGain.gain.exponentialRampToValueAtTime(0.01, now + 3.5); // Long trail
 
     noiseSource.start();
@@ -127,11 +141,13 @@ function App() {
 
   const handleFinish = () => {
     const totalSeconds = selectedMinutes * 60;
-    const elapsedMinutes = Math.floor((totalSeconds - timeLeft) / 60);
+    const elapsedSeconds = totalSeconds - timeLeft;
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+
     if (elapsedMinutes > 0) {
       saveSession(elapsedMinutes);
-      alert(`${elapsedMinutes}分間の集中を記録しました`);
     }
+
     setIsRunning(false);
     setTimeLeft(selectedMinutes * 60);
   };
@@ -187,12 +203,12 @@ function App() {
 
   useEffect(() => {
     // Generate steam particles - More density
-    const particles = Array.from({ length: 40 }).map((_, i) => ({
+    const particles = Array.from({ length: 120 }).map((_, i) => ({
       id: i,
-      left: `${-10 + Math.random() * 120}%`, // Wider spread
-      duration: `${3 + Math.random() * 5}s`,
+      left: `${-20 + Math.random() * 140}%`, // Wider spread
+      duration: `${4 + Math.random() * 4}s`,
       delay: `${Math.random() * 2}s`, // Reduced delay for faster onset
-      size: 100 + Math.random() * 150 // Larger particles
+      size: 150 + Math.random() * 200 // Larger particles
     }));
     setSteamParticles(particles);
   }, []);
@@ -224,7 +240,7 @@ function App() {
             {steamParticles.map((p) => (
               <div
                 key={p.id}
-                className="absolute -bottom-20 bg-white/5 rounded-full blur-[60px] animate-steam"
+                className="absolute -bottom-20 bg-white/60 rounded-full blur-[80px] animate-steam"
                 style={{
                   left: p.left,
                   width: `${p.size}px`,
@@ -247,16 +263,28 @@ function App() {
       <header className="w-full flex justify-between items-center p-6 z-50 absolute top-0 left-0">
         <div className="flex gap-4">
           {!isMini && (
-            <motion.button
-              onClick={() => setView(view === "timer" ? "calendar" : "timer")}
-              whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300, damping: 15 }}
-              className="p-3 rounded-2xl bg-black/20 backdrop-blur-md text-stone-400 border border-white/5 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
-              title={view === "timer" ? "View History" : "Back to Timer"}
-            >
-              {view === "timer" ? <History size={22} /> : <CalendarIcon size={22} />}
-            </motion.button>
+            <>
+              <motion.button
+                onClick={() => setIsSettingsOpen(true)}
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                className="p-3 rounded-2xl bg-black/20 backdrop-blur-md text-stone-400 border border-white/5 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
+                title="Settings"
+              >
+                <Settings size={22} />
+              </motion.button>
+              <motion.button
+                onClick={() => setView(view === "timer" ? "calendar" : "timer")}
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                className="p-3 rounded-2xl bg-black/20 backdrop-blur-md text-stone-400 border border-white/5 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
+                title={view === "timer" ? "View History" : "Back to Timer"}
+              >
+                {view === "timer" ? <History size={22} /> : <CalendarIcon size={22} />}
+              </motion.button>
+            </>
           )}
         </div>
         <motion.button
@@ -271,13 +299,76 @@ function App() {
         </motion.button>
       </header>
 
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setIsSettingsOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#291d18] border border-white/10 p-6 rounded-3xl w-80 shadow-2xl relative"
+            >
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="absolute top-4 right-4 text-stone-500 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <h2 className="text-xl font-bold text-stone-200 mb-6 flex items-center gap-2">
+                <Settings size={20} className="text-orange-500" />
+                Settings
+              </h2>
+
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="text-sm font-medium text-stone-400 flex items-center gap-2">
+                      <Volume2 size={16} />
+                      Volume
+                    </label>
+                    <span className="text-sm font-mono text-orange-400">{volume}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volume}
+                    onChange={(e) => setVolume(Number(e.target.value))}
+                    className="w-full h-2 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-orange-500 hover:accent-orange-400"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => playNotificationSound(volume)}
+                    className="w-full py-2 px-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-stone-300 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Play size={14} />
+                    Test Sound
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* メインコンテンツエリア - Flex Column Layout */}
       <main className="flex-grow w-full h-full flex flex-col relative z-20">
 
         {view === "timer" ? (
           <>
             {/* Timer Area (Grows to fill space, centers timer) */}
-            <div className="flex-grow flex items-center justify-center min-h-0">
+            <div key="timer-view" className="flex-grow flex items-center justify-center min-h-0">
               <div
                 className={`relative ${isMini ? "w-[220px] h-[220px]" : "w-[400px] h-[400px]"} flex-none flex items-center justify-center transition-all duration-500`}
                 onWheel={handleWheel}
@@ -447,43 +538,101 @@ function App() {
             </div>
           </>
         ) : (
-          <div className="flex-grow flex items-center justify-center p-6">
-            <div className="w-full max-w-md bg-[#291d18]/90 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/5 shadow-2xl z-10 overflow-y-auto max-h-[80vh]">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-stone-200 tracking-wide">Sauna Logs</h2>
-                <div className="text-xs text-stone-500 font-mono tracking-widest uppercase">History</div>
+          <div key="calendar-view" className="flex-grow flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300 h-full max-h-screen">
+            <div className="w-full max-w-xl bg-[#291d18]/90 backdrop-blur-2xl p-6 rounded-[1.5rem] border border-white/5 shadow-2xl z-10 flex flex-col max-h-[85vh]">
+
+              {/* Dashboard Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-stone-200 tracking-tight flex items-center gap-2">
+                    <History className="text-orange-500" size={18} />
+                    Sauna Logs
+                  </h2>
+                </div>
+
+                {/* Stats Row */}
+                <div className="flex gap-2">
+                  <div className="bg-black/20 p-2 rounded-xl border border-white/5 flex flex-col items-center min-w-[70px]">
+                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-0.5">Today</span>
+                    <span className="text-lg font-mono text-orange-400 font-bold leading-none">
+                      {focusHistory[new Date().toLocaleDateString('en-CA')] || 0}<span className="text-[10px] text-stone-600 ml-0.5">m</span>
+                    </span>
+                  </div>
+                  <div className="bg-black/20 p-2 rounded-xl border border-white/5 flex flex-col items-center min-w-[70px]">
+                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-0.5">Total</span>
+                    <span className="text-lg font-mono text-stone-300 font-bold leading-none">
+                      {(Object.values(focusHistory).reduce((a, b) => a + b, 0) / 60).toFixed(1)}<span className="text-[10px] text-stone-600 ml-0.5">h</span>
+                    </span>
+                  </div>
+                  <div className="bg-black/20 p-2 rounded-xl border border-white/5 flex flex-col items-center min-w-[70px]">
+                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-0.5 flex items-center gap-1"><Trophy size={8} /> Streak</span>
+                    <span className="text-lg font-mono text-amber-500 font-bold leading-none">
+                      {(() => {
+                        const dates = Object.keys(focusHistory).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                        if (dates.length === 0) return 0;
+
+                        const todayStr = new Date().toLocaleDateString('en-CA');
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const yesterdayStr = yesterday.toLocaleDateString('en-CA');
+
+                        let streak = 0;
+                        let checkDate = new Date();
+
+                        // Check if streak is active (today or yesterday has data)
+                        if (!focusHistory[todayStr] && !focusHistory[yesterdayStr]) return 0;
+
+                        // Start checking from today if data exists, otherwise yesterday
+                        if (!focusHistory[todayStr]) checkDate.setDate(checkDate.getDate() - 1);
+
+                        while (true) {
+                          const dStr = checkDate.toLocaleDateString('en-CA');
+                          if (focusHistory[dStr] > 0) {
+                            streak++;
+                            checkDate.setDate(checkDate.getDate() - 1);
+                          } else {
+                            break;
+                          }
+                        }
+                        return streak;
+                      })()}
+                      <span className="text-[10px] text-stone-600 ml-0.5">d</span>
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="custom-calendar mb-6 bg-black/40 rounded-2xl p-2 border border-white/5">
-                <Calendar
-                  tileContent={({ date, view }) => {
-                    if (view !== 'month') return null;
-                    const dStr = date.toLocaleDateString('en-CA');
-                    const mins = focusHistory[dStr];
-                    if (mins) {
-                      return (
-                        <div className="flex flex-col items-center mt-1">
-                          <div className="w-1.5 h-1.5 bg-orange-500 rounded-full shadow-[0_0_5px_rgba(249,115,22,0.8)]"></div>
+              {/* Recent Sessions List - Scrollable Area */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 min-h-0 pr-2">
+                <div className="flex items-center gap-2 mb-3 sticky top-0 bg-[#291d18]/95 backdrop-blur-md py-2 z-10">
+                  <TrendingUp size={16} className="text-stone-500" />
+                  <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest">Recent Activity</h3>
+                </div>
+
+                {Object.entries(focusHistory).length === 0 ? (
+                  <div className="text-center py-8 text-stone-600 italic">No sessions recorded.</div>
+                ) : (
+                  Object.entries(focusHistory)
+                    .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
+                    // No slice, or large slice to show accumulation
+                    .map(([date, mins]) => (
+                      <div key={date} className="group flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-orange-500/30 transition-all duration-300">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+                            <Flame size={18} className="text-orange-500/70" />
+                          </div>
+                          <div>
+                            <div className="text-stone-300 font-medium">{new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })}</div>
+                            <div className="text-[10px] text-stone-500 font-mono mt-0.5 uppercase tracking-wider">Session Log</div>
+                          </div>
                         </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-stone-600 uppercase tracking-widest mb-4">Recent Sessions</h3>
-                {Object.entries(focusHistory)
-                  .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
-                  .slice(0, 3)
-                  .map(([date, mins]) => (
-                    <div key={date} className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-                      <span className="text-stone-400 font-mono text-sm">{date}</span>
-                      <span className="text-orange-300 font-bold drop-shadow-sm">{mins} min</span>
-                    </div>
-                  ))
-                }
+                        <div className="text-right">
+                          <span className="text-xl font-mono text-orange-400 font-bold block leading-none">{mins}</span>
+                          <span className="text-[10px] text-stone-600 font-bold uppercase tracking-wider">min</span>
+                        </div>
+                      </div>
+                    ))
+                )}
               </div>
             </div>
           </div>
