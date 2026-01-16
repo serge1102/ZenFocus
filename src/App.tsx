@@ -191,8 +191,8 @@ function App() {
   // Calculate display parameters
   let strokeDashoffset: number;
 
-  if (isRunning) {
-    // Running: Full Circle Animation (Start=Full, End=Empty)
+  if (isRunning || (timeLeft < selectedMinutes * 60 && timeLeft > 0)) {
+    // Running or Paused (in middle of session): Full Circle Animation (Start=Full, End=Empty)
     // Map timeLeft (0 to total) to Stroke (0 to circumference)
     const totalSeconds = selectedMinutes * 60;
     const progress = timeLeft / totalSeconds;
@@ -200,7 +200,7 @@ function App() {
     // offset goes 0 (Full) -> circumference (Empty)
     strokeDashoffset = circumference * (1 - progress);
   } else {
-    // Stopped: Clock Face Animation (0-60 mins)
+    // Stopped/Reset: Clock Face Animation (0-60 mins)
     strokeDashoffset = circumference * (1 - (selectedMinutes / 60));
   }
 
@@ -210,7 +210,7 @@ function App() {
 
   useEffect(() => {
     // Generate steam particles - More density
-    const particles = Array.from({ length: 120 }).map((_, i) => ({
+    const particles = Array.from({ length: 200 }).map((_, i) => ({
       id: i,
       left: `${-20 + Math.random() * 140}%`, // Wider spread
       duration: `${4 + Math.random() * 4}s`,
@@ -247,7 +247,7 @@ function App() {
             {steamParticles.map((p) => (
               <div
                 key={p.id}
-                className="absolute -bottom-20 bg-white/60 rounded-full blur-[80px] animate-steam"
+                className="absolute -bottom-20 bg-white/90 rounded-full blur-[80px] animate-steam"
                 style={{
                   left: p.left,
                   width: `${p.size}px`,
@@ -504,10 +504,10 @@ function App() {
                 {/* Main Action Button (Center) - Hot Stone */}
                 <motion.button
                   onClick={handleStartStop}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className={`flex-none w-[72px] h-[72px] mx-8 rounded-full flex items-center justify-center transition-all relative group overflow-hidden ${isRunning
+                  transition={{ type: "spring", stiffness: 180, damping: 12 }}
+                  className={`flex-none w-[72px] h-[72px] mx-8 rounded-full flex items-center justify-center transition-colors duration-300 relative group overflow-hidden ${isRunning
                     ? "bg-gradient-to-br from-orange-700 to-red-700 text-white shadow-[0_0_40px_rgba(239,68,68,0.5),inset_0_2px_5px_rgba(255,255,255,0.3)] ring-1 ring-orange-500/30"
                     : "bg-gradient-to-br from-[#3f3b38] to-[#1c1917] text-stone-400 shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_15px_30px_rgba(0,0,0,0.6)] border-t border-white/10"
                     }`}
