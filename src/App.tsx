@@ -10,6 +10,7 @@ type FocusData = {
 };
 
 function App() {
+  const [defaultDuration, setDefaultDuration] = useState(25);
   const [selectedMinutes, setSelectedMinutes] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -28,6 +29,13 @@ function App() {
     const savedVolume = localStorage.getItem("zenfocus_volume");
     if (savedVolume) {
       setVolume(parseInt(savedVolume, 10));
+    }
+    const savedDuration = localStorage.getItem("zenfocus_default_duration");
+    if (savedDuration) {
+      const duration = parseInt(savedDuration, 10);
+      setDefaultDuration(duration);
+      setSelectedMinutes(duration);
+      setTimeLeft(duration * 60);
     }
   }, []);
 
@@ -350,6 +358,33 @@ function App() {
                     max="100"
                     value={volume}
                     onChange={(e) => setVolume(Number(e.target.value))}
+                    className="w-full h-2 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-orange-500 hover:accent-orange-400"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="text-sm font-medium text-stone-400 flex items-center gap-2">
+                      <Settings size={16} />
+                      Default Duration
+                    </label>
+                    <span className="text-sm font-mono text-orange-400">{defaultDuration} mins</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="5"
+                    max="60"
+                    step="5"
+                    value={defaultDuration}
+                    onChange={(e) => {
+                      const newDuration = Number(e.target.value);
+                      setDefaultDuration(newDuration);
+                      localStorage.setItem("zenfocus_default_duration", newDuration.toString());
+                      if (!isRunning) {
+                        setSelectedMinutes(newDuration);
+                        setTimeLeft(newDuration * 60);
+                      }
+                    }}
                     className="w-full h-2 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-orange-500 hover:accent-orange-400"
                   />
                 </div>
