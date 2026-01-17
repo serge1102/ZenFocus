@@ -217,17 +217,16 @@ function App() {
   const [steamParticles, setSteamParticles] = useState<{ id: number; left: string; duration: string; delay: string; size: number }[]>([]);
 
   useEffect(() => {
-    // Generate steam particles - More density
-    const particles = Array.from({ length: 200 }).map((_, i) => ({
+    // Generate steam particles - Moderate density to prevent white-out
+    const particles = Array.from({ length: 50 }).map((_, i) => ({
       id: i,
-      left: `${-20 + Math.random() * 140}%`, // Wider spread
-      duration: `${4 + Math.random() * 4}s`,
-      delay: `${Math.random() * 2}s`, // Reduced delay for faster onset
-      size: 150 + Math.random() * 200 // Larger particles
+      left: `${-40 + Math.random() * 180}%`,
+      duration: `${5 + Math.random() * 5}s`,
+      delay: `${Math.random() * 5}s`,
+      size: 200 + Math.random() * 300,
     }));
     setSteamParticles(particles);
   }, []);
-
 
   return (
     <div
@@ -250,19 +249,19 @@ function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 2 }}
-            className="absolute inset-0 pointer-events-none z-10"
+            className="absolute inset-0 pointer-events-none z-0"
           >
             {steamParticles.map((p) => (
               <div
                 key={p.id}
-                className="absolute -bottom-20 bg-white/90 rounded-full blur-[80px] animate-steam"
+                className="absolute -bottom-40 bg-white/[0.02] rounded-full blur-[60px] animate-steam"
                 style={{
                   left: p.left,
                   width: `${p.size}px`,
                   height: `${p.size}px`,
                   animationDuration: p.duration,
                   animationDelay: p.delay,
-                  opacity: 0
+                  opacity: 0 // handled by keyframes
                 }}
               />
             ))}
