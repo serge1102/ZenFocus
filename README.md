@@ -1,85 +1,59 @@
 # ZenFocus 🧖‍♂️
 
-**A Meditative, Sauna-Themed Focus Timer.**
+**デジタルな日常に、サウナのような「ととのい」を。**
 
-ZenFocus is a desktop focus timer application that brings the calming atmosphere of a sauna to your productivity workflow. Built with **Tauri**, **React**, and **TypeScript**, it combines distraction-free time management with immersive visuals and sounds.
+ZenFocusは、サウナの落ち着いた雰囲気をデスクトップにもたらす没入型ポモドーロタイマーです。
+「蒸気」や「熱」を感じさせるビジュアルとサウンドで、深い集中状態（ゾーン）へとあなたを誘います。
 
 ![ZenFocus Screenshot](public/screenshot.png)
 
-## ✨ Features
+## ✨ 特徴 (Features)
 
-* **Atmospheric "Sauna" Design**:
-  * Dark wood grain aesthetic with ember-like gradients.
-  * Dynamic steam particle animations that intensify during focus sessions.
-  * Synthesized "Sizzle" steam sound effects upon timer completion.
-  * Subtle ambient animations (heat haze, pulsing glows).
+### 🧖 没入感のある「サウナ」体験
 
-* **Intuitive Controls**:
-  * **Scroll to Set Time**: Simply scroll your mouse wheel over the timer to adjust the duration (1-60 minutes).
-  * **Hot Stone Button**: A tactile start/stop button that glows like a heated stone.
-  * **Mini Mode**: Collapse the app into a compact, always-on-top window to save screen space.
+* **深みのあるサウナ室デザイン**: 暗めの木目調と、熾火（おきび）のような温かみのあるグラデーション。
+* **立ち昇る蒸気**: 集中タイムが進むにつれて濃くなる、リアルな蒸気アニメーション。
+* **ロウリュサウンド**: タイマー終了時には、熱したサウナストーンに水をかけた時のような「ジュワーッ」という心地よい音が鳴り響きます。
 
-* **Activity Tracking**:
-  * **Daily Logs**: Track your total focus minutes for the day.
-  * **Streak Counter**: Keep your momentum going with daily streak tracking.
-  * **Session History**: Detailed log of recent focus sessions.
+### 🎛️ 操作
 
-* **Privacy First**: All data is stored locally on your device.
+* **スクロールで時間設定**: タイマーの上でマウスホイールをスクロールするだけで、1分〜60分の間で時間を調整できます。
+* **一時停止 (Start/Pause)**: 中央の大きなボタンでタイマーを開始・一時停止できます。
+* **リセット (Reset)**: 左側の矢印ボタンでタイマーをリセットし、初期状態に戻します。
+* **完了 (Finish)**: 右側のチェックマークボタンで、現在のタイマーを完了させ、セッションを記録します。
+* **ミニモード (Mini Mode)**: 右上の縮小アイコンをクリックすると、常に最前面に表示されるコンパクトモードに切り替わります。
+* **設定 (Settings)**: 左上の歯車アイコンから、音量やデフォルト時間を設定できます。
 
-## 📥 Download & Installation
+### 🖥️ ミニモード
 
-You can download the latest version for Windows from the **[Releases Page](https://github.com/serge1102/ZenFocus/releases)**.
+* **コンパクトな常駐モード**: ウィンドウを極小サイズに折りたたみ、画面の隅に常に最前面で表示させておくことができます。作業の邪魔をせず、常に残り時間を確認できます。ミニモードでは常にウインドウが最前面に表示され、タイマーをを確認できます。
 
-1. Download the `ZenFocus_..._x64-setup.exe` file.
-2. Run the installer.
-3. Launch ZenFocus and start condensing your focus.
+### 📊 活動記録
 
-## 📖 How to Use
+* **日々の記録**: その日の総集中時間を自動で集計。
+* **ストリーク（継続日数）**: 毎日の継続を可視化し、モチベーション維持をサポートします。
+* **セッション履歴**: 最近の集中セッションの詳細を振り返ることができます。
 
-1. **Set Time**: Hover over the timer circle and scroll up/down to set your desired minutes (default: 25m).
-2. **Start Heating**: Click the large central button to start the timer.
-3. **Focus**: The "steam" will rise, and the Ember ring will slowly deplete.
-4. **Cool Down**: When the timer hits 0, a steam sound plays, and the session is logged to your history.
-5. **Review**: Switch to the Calendar view (History icon) to see your daily stats and streaks.
+### ⚙️ 設定
 
-## 🛠 Development
+* **時間設定**: タイマーのデフォルト時間設定を変更できます。
+* **音量設定**: 終了音の音量を調整できます。
 
-If you want to build this project from source:
+## 📥 ダウンロードとインストール
 
-### Prerequisites
+Windows版の最新バージョンは、**[Releases Page](https://github.com/serge1102/ZenFocus/releases)** からダウンロードできます。
 
-* Node.js (v18+)
-* Rust & Cargo (for Tauri)
+1. **`.msi` ファイルをダウンロード**: Releasesページから `ZenFocus_..._x64_en-US.msi` のような名前のインストーラーファイルをダウンロードしてください。
+2. **インストーラーを実行**: ダウンロードした `.msi` ファイルをダブルクリックして実行します。
+3. **インストール**: 画面の指示に従ってインストールを完了させてください。
+4. **起動**: インストール完了後、ZenFocusを起動し、デジタルデトックスの蒸気を浴びましょう。
 
-### Setup
+※ Windowsによって「PCが保護されました」という警告が表示される場合がありますが、詳細情報をクリックし「実行」を選択することでインストール可能です。
 
-```bash
-# Clone the repository
-git clone https://github.com/serge1102/ZenFocus.git
-cd ZenFocus
+## 📖 使い方
 
-# Install dependencies
-npm install
-
-# Run in development mode
-npm run dev
-# In a separate terminal:
-npm run tauri dev
-```
-
-### Build
-
-To build the executable for production:
-
-```bash
-npm run tauri build
-```
-
-## 🏗 Tech Stack
-
-* [Tauri v2](https://tauri.app/) - for the lightweight desktop runtime
-* [React](https://react.dev/) - for the UI framework
-* [TypeScript](https://www.typescriptlang.org/) - for type safety
-* [Tailwind CSS](https://tailwindcss.com/) - for styling
-* [Framer Motion](https://www.framer.com/motion/) - for smooth animations
-* [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) - for real-time sound synthesis
+1. **時間を決める**: タイマーサークルにカーソルを合わせ、ホイールをスクロールして集中したい分数をセットします（デフォルト: 25分）。
+2. **温める (Start)**: 中央の大きなボタンをクリックしてタイマーを開始します。
+3. **集中 (Focus)**: 徐々に蒸気が立ち込め、残り時間を示すエンバーリング（残り火）がゆっくりと減っていきます。
+4. **ととのう (Finish)**: タイマーが0になるとロウリュ音が鳴り、セッションが履歴に記録されます。
+5. **振り返る**: 履歴アイコンをクリックしてカレンダービューに切り替え、その日の成果や継続日数を確認できます。
