@@ -600,6 +600,12 @@ function App() {
                     const tickHeight = isHour ? 15 : 8;
                     const tickWidth = isHour ? 3 : 1;
                     const rotation = i * 6;
+                    // Colors:
+                    // Focus: Dark Wood (#451a03) for Hour, Stone (#57534e) for minute
+                    // Outdoor: White/Bright Teal (#ccfbf1) for Hour, Slate (#334155) for minute
+                    const hourColor = mode === "focus" ? "#451a03" : "#ccfbf1";
+                    const minColor = mode === "focus" ? "#57534e" : "#475569";
+
                     return (
                       <rect
                         key={i}
@@ -607,9 +613,9 @@ function App() {
                         y={150 - radius - 20}
                         width={tickWidth}
                         height={tickHeight}
-                        fill={isHour ? "#451a03" : "#57534e"} // Dark Wood/Stone
+                        fill={isHour ? hourColor : minColor}
                         transform={`rotate(${rotation} 150 150)`}
-                        className="opacity-90"
+                        className={mode === "focus" ? "opacity-90" : "opacity-60"}
                       />
                     )
                   })}
