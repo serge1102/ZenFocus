@@ -10,12 +10,16 @@ type FocusData = {
 };
 
 function App() {
-  const [defaultDuration, setDefaultDuration] = useState(25);
+  const [defaultFocusDuration, setDefaultFocusDuration] = useState(25);
+  const [defaultRestDuration, setDefaultRestDuration] = useState(5);
   const [selectedMinutes, setSelectedMinutes] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
+  // Steam Particle Setup
+  const [steamParticles, setSteamParticles] = useState<{ id: number; left: string; top?: string; duration: string; delay: string; size: number; direction?: number }[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isMini, setIsMini] = useState(false);
   const [view, setView] = useState<"timer" | "calendar">("timer");
+  const [mode, setMode] = useState<"focus" | "outdoor">("focus");
   const [focusHistory, setFocusHistory] = useState<FocusData>({});
   const [volume, setVolume] = useState(50);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -30,12 +34,18 @@ function App() {
     if (savedVolume) {
       setVolume(parseInt(savedVolume, 10));
     }
-    const savedDuration = localStorage.getItem("zenfocus_default_duration");
-    if (savedDuration) {
-      const duration = parseInt(savedDuration, 10);
-      setDefaultDuration(duration);
+    const savedFocusDuration = localStorage.getItem("zenfocus_default_focus_duration");
+    if (savedFocusDuration) {
+      const duration = parseInt(savedFocusDuration, 10);
+      setDefaultFocusDuration(duration);
+      // Initial load: logic to set selectedMinutes is a bit tricky if we have two.
+      // Assuming start in Focus mode, we use focus duration.
       setSelectedMinutes(duration);
       setTimeLeft(duration * 60);
+    }
+    const savedRestDuration = localStorage.getItem("zenfocus_default_rest_duration");
+    if (savedRestDuration) {
+      setDefaultRestDuration(parseInt(savedRestDuration, 10));
     }
   }, []);
 
@@ -44,64 +54,118 @@ function App() {
     localStorage.setItem("zenfocus_volume", volume.toString());
   }, [volume]);
 
-  const playNotificationSound = (testVolume?: number) => {
+  const playNotificationSound = (testVolume?: number, testMode?: "focus" | "outdoor") => {
     const volToUse = testVolume !== undefined ? testVolume : volume;
+    const modeToUse = testMode !== undefined ? testMode : mode;
+
     if (volToUse === 0) return;
 
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const bufferSize = audioContext.sampleRate * 4; // 4 seconds
-    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    // Generate white noise
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
-    const noiseSource = audioContext.createBufferSource();
-    noiseSource.buffer = buffer;
-
-    // Filter 1: Rumble (Low frequency impact) - Body of the splash
-    const rumbleFilter = audioContext.createBiquadFilter();
-    rumbleFilter.type = "lowpass";
-    rumbleFilter.frequency.value = 400;
-
-    const rumbleGain = audioContext.createGain();
-
-    // Filter 2: Hiss (High frequency sizzle) - The "Juujuu" sound
-    const hissFilter = audioContext.createBiquadFilter();
-    hissFilter.type = "highpass";
-    hissFilter.frequency.value = 3500;
-    hissFilter.Q.value = 1; // Broad peak for texture
-
-    const hissGain = audioContext.createGain();
-
-    // Connect Graph
-    noiseSource.connect(rumbleFilter);
-    rumbleFilter.connect(rumbleGain);
-    rumbleGain.connect(audioContext.destination);
-
-    noiseSource.connect(hissFilter);
-    hissFilter.connect(hissGain);
-    hissGain.connect(audioContext.destination);
-
     const now = audioContext.currentTime;
-
-    // Rumble Envelope - Heavy start, quick fade
     const masterGainValue = volToUse / 100;
 
-    rumbleGain.gain.setValueAtTime(0, now);
-    rumbleGain.gain.linearRampToValueAtTime(3.0 * masterGainValue, now + 0.1);
-    rumbleGain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+    if (modeToUse === "focus") {
+      // --- Sauna Steam Sound (Original) ---
+      const bufferSize = audioContext.sampleRate * 4; // 4 seconds
+      const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
 
-    // Hiss Envelope - Sharp attack, sustains longer for "Juujuu"
-    hissGain.gain.setValueAtTime(0, now);
-    hissGain.gain.linearRampToValueAtTime(1.5 * masterGainValue, now + 0.05); // Snap start
-    hissGain.gain.exponentialRampToValueAtTime(0.4 * masterGainValue, now + 1.0); // Strong sizzle sustain
-    hissGain.gain.exponentialRampToValueAtTime(0.01, now + 3.5); // Long trail
+      // Generate white noise
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
 
-    noiseSource.start();
-    noiseSource.stop(now + 4.0);
+      const noiseSource = audioContext.createBufferSource();
+      noiseSource.buffer = buffer;
+
+      // Filter 1: Rumble
+      const rumbleFilter = audioContext.createBiquadFilter();
+      rumbleFilter.type = "lowpass";
+      rumbleFilter.frequency.value = 400;
+      const rumbleGain = audioContext.createGain();
+
+      // Filter 2: Hiss
+      const hissFilter = audioContext.createBiquadFilter();
+      hissFilter.type = "highpass";
+      hissFilter.frequency.value = 3500;
+      hissFilter.Q.value = 1;
+      const hissGain = audioContext.createGain();
+
+      noiseSource.connect(rumbleFilter);
+      rumbleFilter.connect(rumbleGain);
+      rumbleGain.connect(audioContext.destination);
+
+      noiseSource.connect(hissFilter);
+      hissFilter.connect(hissGain);
+      hissGain.connect(audioContext.destination);
+
+      // Rumble Envelope
+      rumbleGain.gain.setValueAtTime(0, now);
+      rumbleGain.gain.linearRampToValueAtTime(3.0 * masterGainValue, now + 0.1);
+      rumbleGain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+
+      // Hiss Envelope
+      hissGain.gain.setValueAtTime(0, now);
+      hissGain.gain.linearRampToValueAtTime(1.5 * masterGainValue, now + 0.05);
+      hissGain.gain.exponentialRampToValueAtTime(0.4 * masterGainValue, now + 1.0);
+      hissGain.gain.exponentialRampToValueAtTime(0.01, now + 3.5);
+
+      noiseSource.start();
+      noiseSource.stop(now + 4.0);
+    } else {
+      // --- Outdoor Air Bath Sound (Wind Chime / Cool Bell) ---
+      // Simple sine waves with different frequencies for a chord
+      const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 (C Major)
+
+      frequencies.forEach((freq, i) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now);
+
+        // Randomize start slightly for "wind chime" feel
+        const startTime = now + (i * 0.1) + (Math.random() * 0.2);
+
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.3 * masterGainValue, startTime + 0.05); // Attack
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 3.0); // Long decay
+
+        osc.start(startTime);
+        osc.stop(startTime + 3.5);
+      });
+
+      // Add a subtle "breeze" noise (Pink noise approximation using lowpass on white)
+      const breezeBufferSize = audioContext.sampleRate * 5;
+      const breezeBuffer = audioContext.createBuffer(1, breezeBufferSize, audioContext.sampleRate);
+      const breezeData = breezeBuffer.getChannelData(0);
+      for (let i = 0; i < breezeBufferSize; i++) {
+        breezeData[i] = (Math.random() * 2 - 1) * 0.5;
+      }
+
+      const breezeSource = audioContext.createBufferSource();
+      breezeSource.buffer = breezeBuffer;
+
+      const breezeFilter = audioContext.createBiquadFilter();
+      breezeFilter.type = "lowpass";
+      breezeFilter.frequency.value = 500;
+
+      const breezeGain = audioContext.createGain();
+
+      breezeSource.connect(breezeFilter);
+      breezeFilter.connect(breezeGain);
+      breezeGain.connect(audioContext.destination);
+
+      breezeGain.gain.setValueAtTime(0, now);
+      breezeGain.gain.linearRampToValueAtTime(0.1 * masterGainValue, now + 1.0);
+      breezeGain.gain.linearRampToValueAtTime(0, now + 5.0);
+
+      breezeSource.start(now);
+      breezeSource.stop(now + 5.0);
+    }
   };
 
   useEffect(() => {
@@ -113,11 +177,18 @@ function App() {
     } else if (timeLeft === 0) {
       setIsRunning(false);
       playNotificationSound();
-      saveSession(selectedMinutes);
-      setTimeLeft(selectedMinutes * 60);
+
+      if (mode === "focus") {
+        saveSession(selectedMinutes);
+        setTimeLeft(selectedMinutes * 60);
+      } else {
+        setMode("focus");
+        setSelectedMinutes(defaultFocusDuration);
+        setTimeLeft(defaultFocusDuration * 60);
+      }
     }
     return () => clearInterval(timer);
-  }, [isRunning, timeLeft, selectedMinutes]);
+  }, [isRunning, timeLeft, selectedMinutes, mode, defaultFocusDuration]);
 
   useEffect(() => {
     document.title = `${formatTime(timeLeft)} - ZenFocus`;
@@ -140,10 +211,24 @@ function App() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const handleModeToggle = () => {
+    if (isRunning) return; // Prevent switching while running
+    const newMode = mode === "focus" ? "outdoor" : "focus";
+    setMode(newMode);
+
+    // Switch time to the new mode's default
+    const newDuration = newMode === "focus" ? defaultFocusDuration : defaultRestDuration;
+    setSelectedMinutes(newDuration);
+    setTimeLeft(newDuration * 60);
+  };
+
   const handleStartStop = () => setIsRunning(!isRunning);
 
   const handleReset = () => {
     setIsRunning(false);
+    // Reset to current mode's default or current selected? 
+    // Ideally current selected, but usually reset implies going back to default or starting point.
+    // Let's stick to selectedMinutes as that tracks what the user scrolled to or default.
     setTimeLeft(selectedMinutes * 60);
   };
 
@@ -152,12 +237,18 @@ function App() {
     const elapsedSeconds = totalSeconds - timeLeft;
     const elapsedMinutes = Math.floor(elapsedSeconds / 60);
 
-    if (elapsedMinutes > 0) {
+    if (mode === "focus" && elapsedMinutes > 0) {
       saveSession(elapsedMinutes);
     }
 
     setIsRunning(false);
     setTimeLeft(selectedMinutes * 60);
+    // If finishing outdoor manually, maybe just stay in outdoor? 
+    // Requirement said: "Auto-switch to focus when timer ENDS". 
+    // Manual finish logic isn't specified, but staying in current mode seems safer for manual control. 
+    // But for consistency with timer finish, let's keep it manual behavior unless requested otherwise.
+    // Actually, "Automatic switch" implies only on automatic completion.
+    // So manual stop/finish -> stay in mode.
   };
 
   const toggleMini = async () => {
@@ -213,35 +304,42 @@ function App() {
   }
 
 
-  // Steam Particle Setup
-  const [steamParticles, setSteamParticles] = useState<{ id: number; left: string; duration: string; delay: string; size: number }[]>([]);
-
   useEffect(() => {
-    // Generate steam particles - Moderate density to prevent white-out
-    const particles = Array.from({ length: 50 }).map((_, i) => ({
+    // Generate particles
+    // For Steam (Focus): Rising up
+    // For Breeze (Outdoor): Moving sideways/randomly, cleaner look
+
+    // We'll reuse the same array structure but animate differently via CSS or just style props
+    // Actually recalculating props on mode switch might be nice styling
+    const newParticles = Array.from({ length: 50 }).map((_, i) => ({
       id: i,
-      left: `${-40 + Math.random() * 180}%`,
-      duration: `${5 + Math.random() * 5}s`,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`, // Added top for breeze coverage
+      duration: `${5 + Math.random() * 10}s`, // Slower for breeze maybe
       delay: `${Math.random() * 5}s`,
-      size: 200 + Math.random() * 300,
+      size: 100 + Math.random() * 200,
+      direction: Math.random() > 0.5 ? 1 : -1 // For breeze direction
     }));
-    setSteamParticles(particles);
-  }, []);
+    setSteamParticles(newParticles);
+  }, [mode]);
 
   return (
     <div
-      className="h-screen flex flex-col select-none relative overflow-hidden text-stone-100 font-sans"
+      className="h-screen flex flex-col select-none relative overflow-hidden text-stone-100 font-sans transition-colors duration-1000"
       style={{
-        backgroundColor: '#1c1008', // Dark wood base
-        backgroundImage: `
+        backgroundColor: mode === "focus" ? '#1c1008' : '#0f172a', // Dark wood vs Dark slate/cool
+        backgroundImage: mode === "focus" ? `
           radial-gradient(circle at 50% 0%, rgba(255,150,100,0.15), transparent 60%),
           repeating-linear-gradient(90deg, transparent 0, transparent 58px, rgba(0,0,0,0.3) 59px, rgba(0,0,0,0.3) 60px),
           url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E")
+        ` : `
+          radial-gradient(circle at 50% 0%, rgba(100,200,255,0.1), transparent 70%),
+          url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")
         `
       }}
     >
 
-      {/* Steam Effect - Only visible when running */}
+      {/* Particles Effect */}
       <AnimatePresence>
         {isRunning && (
           <motion.div
@@ -254,14 +352,15 @@ function App() {
             {steamParticles.map((p) => (
               <div
                 key={p.id}
-                className="absolute -bottom-40 bg-white/[0.02] rounded-full blur-[60px] animate-steam"
+                className={`absolute rounded-full blur-[60px] ${mode === "focus" ? "animate-steam bg-white/[0.02] bottom-[-40px]" : "animate-breeze bg-teal-200/[0.03]"}`}
                 style={{
                   left: p.left,
+                  top: mode === "outdoor" ? p.top : undefined, // Only use top for outdoor/breeze
                   width: `${p.size}px`,
                   height: `${p.size}px`,
                   animationDuration: p.duration,
                   animationDelay: p.delay,
-                  opacity: 0 // handled by keyframes
+                  opacity: 0, // handled by keyframes
                 }}
               />
             ))}
@@ -269,13 +368,13 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Ambient Mist Effect (Base - weaker) */}
-      <div className="absolute top-0 -left-20 w-96 h-96 bg-stone-800/10 rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse delay-1000"></div>
-      <div className="absolute bottom-0 -right-20 w-[500px] h-[500px] bg-orange-900/10 rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse"></div>
+      {/* Ambient Mist Effect */}
+      <div className={`absolute top-0 -left-20 w-96 h-96 rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse delay-1000 transition-colors duration-1000 ${mode === "focus" ? "bg-stone-800/10" : "bg-teal-900/10"}`}></div>
+      <div className={`absolute bottom-0 -right-20 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none mix-blend-screen animate-pulse transition-colors duration-1000 ${mode === "focus" ? "bg-orange-900/10" : "bg-blue-900/10"}`}></div>
 
       {/* Header Area */}
       <header className="w-full flex justify-between items-center p-6 z-50 absolute top-0 left-0">
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           {!isMini && (
             <>
               <motion.button
@@ -301,16 +400,45 @@ function App() {
             </>
           )}
         </div>
-        <motion.button
-          onClick={toggleMini}
-          whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 15 }}
-          className="p-3 rounded-2xl bg-black/20 backdrop-blur-md text-stone-400 border border-white/5 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
-          title={isMini ? "Maximize" : "Mini Mode"}
-        >
-          {isMini ? <Maximize2 size={22} /> : <Minimize2 size={22} />}
-        </motion.button>
+
+        <div className="flex gap-4 items-center">
+          {!isMini && (
+            /* Mode Toggle Switch - Moved here */
+            <div className="flex bg-black/20 backdrop-blur-md rounded-2xl p-1 border border-white/5 shadow-lg">
+              <button
+                onClickCapture={(e) => { e.stopPropagation(); if (!isRunning && mode !== "focus") handleModeToggle(); }}
+                className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 ${mode === "focus"
+                  ? "bg-stone-700/50 text-orange-200 shadow-sm"
+                  : "text-stone-500 hover:text-stone-300"}`}
+                disabled={isRunning}
+              >
+                <Flame size={14} className={mode === "focus" ? "text-orange-500" : ""} />
+                Focus
+              </button>
+              <button
+                onClickCapture={(e) => { e.stopPropagation(); if (!isRunning && mode !== "outdoor") handleModeToggle(); }}
+                className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 ${mode === "outdoor"
+                  ? "bg-teal-900/50 text-teal-100 shadow-sm"
+                  : "text-stone-500 hover:text-stone-300"}`}
+                disabled={isRunning}
+              >
+                <span className={mode === "outdoor" ? "text-teal-400" : ""}>🍃</span>
+                Rest
+              </button>
+            </div>
+          )}
+
+          <motion.button
+            onClick={toggleMini}
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 247, 237, 0.1)" }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            className="p-3 rounded-2xl bg-black/20 backdrop-blur-md text-stone-400 border border-white/5 shadow-lg cursor-pointer hover:shadow-orange-500/5 hover:text-stone-200"
+            title={isMini ? "Maximize" : "Mini Mode"}
+          >
+            {isMini ? <Maximize2 size={22} /> : <Minimize2 size={22} />}
+          </motion.button>
+        </div>
       </header>
 
       {/* Settings Modal */}
@@ -364,27 +492,54 @@ function App() {
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <label className="text-sm font-medium text-stone-400 flex items-center gap-2">
-                      <Settings size={16} />
-                      Default Duration
+                      <Flame size={16} />
+                      Focus Duration
                     </label>
-                    <span className="text-sm font-mono text-orange-400">{defaultDuration} mins</span>
+                    <span className="text-sm font-mono text-orange-400">{defaultFocusDuration} mins</span>
                   </div>
                   <input
                     type="range"
                     min="5"
                     max="60"
                     step="5"
-                    value={defaultDuration}
+                    value={defaultFocusDuration}
                     onChange={(e) => {
                       const newDuration = Number(e.target.value);
-                      setDefaultDuration(newDuration);
-                      localStorage.setItem("zenfocus_default_duration", newDuration.toString());
-                      if (!isRunning) {
+                      setDefaultFocusDuration(newDuration);
+                      localStorage.setItem("zenfocus_default_focus_duration", newDuration.toString());
+                      if (!isRunning && mode === "focus") {
                         setSelectedMinutes(newDuration);
                         setTimeLeft(newDuration * 60);
                       }
                     }}
                     className="w-full h-2 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-orange-500 hover:accent-orange-400"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="text-sm font-medium text-stone-400 flex items-center gap-2">
+                      <span className="text-base">🍃</span>
+                      Rest Duration
+                    </label>
+                    <span className="text-sm font-mono text-teal-400">{defaultRestDuration} mins</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="20"
+                    step="1"
+                    value={defaultRestDuration}
+                    onChange={(e) => {
+                      const newDuration = Number(e.target.value);
+                      setDefaultRestDuration(newDuration);
+                      localStorage.setItem("zenfocus_default_rest_duration", newDuration.toString());
+                      if (!isRunning && mode === "outdoor") {
+                        setSelectedMinutes(newDuration);
+                        setTimeLeft(newDuration * 60);
+                      }
+                    }}
+                    className="w-full h-2 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-400"
                   />
                 </div>
 
@@ -429,8 +584,11 @@ function App() {
                 className={`relative ${isMini ? "w-[220px] h-[220px]" : "w-[400px] h-[400px]"} flex-none flex items-center justify-center transition-all duration-500`}
                 onWheel={handleWheel}
               >
-                {/* Glow Effect Background - Heat Radiance */}
-                {!isMini && <div className={`absolute inset-0 blur-3xl rounded-full pointer-events-none transition-opacity duration-1000 ${isRunning ? "bg-orange-500/10 opacity-100" : "bg-stone-500/5 opacity-50"}`}></div>}
+                {/* Glow Effect Background */}
+                {!isMini && <div className={`absolute inset-0 blur-3xl rounded-full pointer-events-none transition-all duration-1000 ${isRunning
+                  ? (mode === "focus" ? "bg-orange-500/10 opacity-100" : "bg-teal-500/10 opacity-100")
+                  : "bg-stone-500/5 opacity-50"
+                  }`}></div>}
 
                 <svg
                   className="absolute top-0 left-0 w-full h-full"
@@ -477,9 +635,9 @@ function App() {
                   {/* Gradient Definition - Ember/Heat */}
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#fbbf24" /> {/* Amber 400 (Fire core) */}
-                      <stop offset="50%" stopColor="#f97316" /> {/* Orange 500 */}
-                      <stop offset="100%" stopColor="#ef4444" /> {/* Red 500 */}
+                      <stop offset="0%" stopColor={mode === "focus" ? "#fbbf24" : "#a5f3fc"} />
+                      <stop offset="50%" stopColor={mode === "focus" ? "#f97316" : "#2dd4bf"} />
+                      <stop offset="100%" stopColor={mode === "focus" ? "#ef4444" : "#0f766e"} />
                     </linearGradient>
                   </defs>
                 </svg>
@@ -492,19 +650,29 @@ function App() {
                   {isRunning && !isMini && (
                     <div className="text-orange-200/80 text-xl font-medium mt-2 font-sans tracking-wide drop-shadow-md">
                       <span className="flex items-center gap-2">
-                        <Flame size={16} className="animate-pulse text-orange-400" />
-                        Heating until {new Date(Date.now() + timeLeft * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {mode === "focus" ? (
+                          <>
+                            <Flame size={16} className="animate-pulse text-orange-400" />
+                            Heating
+                          </>
+                        ) : (
+                          <>
+                            <span className="animate-bounce">🍃</span>
+                            Cooling
+                          </>
+                        )}
+                        until {new Date(Date.now() + timeLeft * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                   )}
                   {!isMini && !isRunning && (
                     <div className="text-stone-500/80 text-xs font-bold tracking-[0.2em] mt-4 uppercase animate-pulse shadow-black drop-shadow-sm">
-                      Scroll to Set Time
+                      Scroll to Set {mode === "focus" ? "Time" : "Rest"}
                     </div>
                   )}
                   {isRunning && !isMini && (
-                    <div className="text-orange-400/60 text-xs font-bold tracking-[0.2em] mt-2 uppercase">
-                      Infrared On
+                    <div className={`${mode === "focus" ? "text-orange-400/60" : "text-teal-400/60"} text-xs font-bold tracking-[0.2em] mt-2 uppercase`}>
+                      {mode === "focus" ? "Infrared On" : "Nature Breeze"}
                     </div>
                   )}
                 </div>
@@ -542,7 +710,9 @@ function App() {
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 180, damping: 12 }}
                   className={`flex-none w-[72px] h-[72px] mx-8 rounded-full flex items-center justify-center transition-colors duration-300 relative group overflow-hidden ${isRunning
-                    ? "bg-gradient-to-br from-orange-700 to-red-700 text-white shadow-[0_0_40px_rgba(239,68,68,0.5),inset_0_2px_5px_rgba(255,255,255,0.3)] ring-1 ring-orange-500/30"
+                    ? (mode === "focus"
+                      ? "bg-gradient-to-br from-orange-700 to-red-700 text-white shadow-[0_0_40px_rgba(239,68,68,0.5),inset_0_2px_5px_rgba(255,255,255,0.3)] ring-1 ring-orange-500/30"
+                      : "bg-gradient-to-br from-teal-700 to-cyan-700 text-white shadow-[0_0_40px_rgba(45,212,191,0.5),inset_0_2px_5px_rgba(255,255,255,0.3)] ring-1 ring-teal-500/30")
                     : "bg-gradient-to-br from-[#3f3b38] to-[#1c1917] text-stone-400 shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_15px_30px_rgba(0,0,0,0.6)] border-t border-white/10"
                     }`}
                 >
@@ -557,7 +727,7 @@ function App() {
                         exit={{ opacity: 0, scale: 0.5 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <Pause size={28} fill="currentColor" className="drop-shadow-lg text-orange-50" />
+                        <Pause size={28} fill="currentColor" className={`drop-shadow-lg ${mode === "focus" ? "text-orange-50" : "text-teal-50"}`} />
                       </motion.div>
                     ) : (
                       <motion.div
